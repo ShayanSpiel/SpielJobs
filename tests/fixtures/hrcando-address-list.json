@@ -1,0 +1,43 @@
+{
+  "data": {
+    "totalPages": 1,
+    "totalJobCount": 18,
+    "companyBrandColor": "#F7A400",
+    "jobs": [
+      {
+        "id": 1363,
+        "jobGuid": "dc812bf1-0785-46c3-befa-f2714d814d3f",
+        "title": "سرپرست پشتیبانی مشتریان",
+        "isRemote": false,
+        "workType": "تمام وقت",
+        "workTypeEn": "Full-time",
+        "workTypeId": 51,
+        "branchTitle": "جاباما",
+        "redirectUrl": null,
+        "submitTime": "2026-11-15T18:24:15.519",
+        "jobCategory": {
+          "id": 127,
+          "jobCategoryTitleFa": "خدمات و پشتیبانی مشتریان",
+          "jobCategoryTitleEn": "Customer service / support / public relations\r\n"
+        },
+        "city": {
+          "id": 2038,
+          "cityTitleFa": "تهران",
+          "cityTitleEn": "Tehran"
+        },
+        "region": {
+          "id": 221,
+          "regionTitleFa": "صادقیه",
+          "regionTitleEn": "Sadeghieh"
+        },
+        "department": {
+          "id": 9,
+          "departmentTitle": "عملیات (ارتباط با مهمان)"
+        }
+      }
+    ]
+  },
+  "succeed": true,
+  "statusCode": 0,
+  "message": null
+}

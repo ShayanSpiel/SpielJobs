@@ -1,0 +1,255 @@
+{
+  "concepts": [
+    [
+      "هوش مصنوعی",
+      "ai",
+      "artificial intelligence"
+    ],
+    [
+      "محصول",
+      "product"
+    ],
+    [
+      "بازاریابی",
+      "marketing",
+      "مارکتینگ"
+    ],
+    [
+      "حسابداری",
+      "accounting",
+      "accountant",
+      "حسابدار"
+    ],
+    [
+      "پشتیبانی",
+      "support",
+      "customer service"
+    ],
+    [
+      "منابع انسانی",
+      "human resources",
+      "hr"
+    ],
+    [
+      "تحلیل داده",
+      "data analyst",
+      "data analysis"
+    ],
+    [
+      "فروش",
+      "sales"
+    ],
+    [
+      "عملیات",
+      "operations",
+      "operation"
+    ],
+    [
+      "پتروشیمی",
+      "petrochemical",
+      "petrochemicals"
+    ],
+    [
+      "نفت و گاز",
+      "oil and gas",
+      "oil & gas"
+    ],
+    [
+      "فرایند",
+      "process",
+      "فرآیند"
+    ],
+    [
+      "تولید",
+      "production",
+      "manufacturing"
+    ],
+    [
+      "کنترل کیفیت",
+      "quality control",
+      "qc"
+    ],
+    [
+      "ایمنی",
+      "safety",
+      "hse"
+    ],
+    [
+      "انبار",
+      "warehouse",
+      "انباردار"
+    ],
+    [
+      "تحول",
+      "transformation",
+      "transformer"
+    ],
+    [
+      "اکسل",
+      "excel"
+    ],
+    [
+      "power bi",
+      "پاور بی آی"
+    ]
+  ],
+  "cities": {
+    "tehran": [
+      "تهران",
+      "tehran"
+    ],
+    "karaj": [
+      "کرج",
+      "karaj"
+    ],
+    "isfahan": [
+      "اصفهان",
+      "isfahan",
+      "esfahan"
+    ],
+    "shiraz": [
+      "شیراز",
+      "shiraz"
+    ],
+    "mashhad": [
+      "مشهد",
+      "mashhad"
+    ],
+    "tabriz": [
+      "تبریز",
+      "tabriz"
+    ],
+    "ahvaz": [
+      "اهواز",
+      "ahvaz"
+    ],
+    "asaluyeh": [
+      "عسلویه",
+      "asaluyeh",
+      "assaluyeh"
+    ],
+    "mahshahr": [
+      "ماهشهر",
+      "mahshahr"
+    ],
+    "bushehr": [
+      "بوشهر",
+      "bushehr"
+    ],
+    "rasht": [
+      "رشت",
+      "rasht"
+    ],
+    "yazd": [
+      "یزد",
+      "yazd"
+    ],
+    "kerman": [
+      "کرمان",
+      "kerman"
+    ],
+    "qom": [
+      "قم",
+      "qom"
+    ],
+    "qazvin": [
+      "قزوین",
+      "qazvin"
+    ],
+    "arak": [
+      "اراک",
+      "arak"
+    ]
+  },
+  "leadership": [
+    "مدیر",
+    "سرپرست",
+    "manager",
+    "supervisor",
+    "head",
+    "director",
+    "lead"
+  ],
+  "skills": [
+    "excel",
+    "sql",
+    "python",
+    "javascript",
+    "typescript",
+    "sap",
+    "power bi",
+    "crm",
+    "figma",
+    "photoshop",
+    "autocad",
+    "solidworks",
+    "hse",
+    "seo",
+    "django",
+    "react",
+    "اکسل",
+    "پایتون"
+  ],
+  "industries": [
+    "پتروشیمی",
+    "نفت و گاز"
+  ],
+  "role_kinds": {
+    "developer": [
+      "developer",
+      "programmer",
+      "توسعه دهنده",
+      "برنامه نویس",
+      "software engineer",
+      "مهندس نرم افزار"
+    ],
+    "engineer": [
+      "engineer",
+      "engineering",
+      "مهندس"
+    ]
+  },
+  "role_families": {
+    "support": [
+      "پشتیبانی",
+      "support",
+      "customer service",
+      "customer relations"
+    ],
+    "accounting": [
+      "حسابدار",
+      "حسابداری",
+      "accountant",
+      "accounting"
+    ],
+    "product": [
+      "محصول",
+      "product manager",
+      "product management",
+      "product owner"
+    ],
+    "marketing": [
+      "بازاریابی",
+      "مارکتینگ",
+      "marketing"
+    ],
+    "sales": [
+      "فروش",
+      "sales",
+      "account manager",
+      "business development"
+    ],
+    "operations": [
+      "عملیات",
+      "operations",
+      "operation manager"
+    ],
+    "hr": [
+      "منابع انسانی",
+      "human resources",
+      "human resource",
+      "recruitment",
+      "talent acquisition"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "version":"user-journeys/1",
+  "label_status":"User-goal acceptance scenarios; not an independently labelled market recall benchmark",
+  "cases":[
+    {"id":"accountant-tehran","persona":"Accountant","query":"حسابدار در تهران","goal":"Find accounting vacancies in Tehran and open an original application page","must":["accounting role family","verified Tehran location","source link"],"reject":["sales-only roles","unknown location","closed vacancy"]},
+    {"id":"accountant-skill","persona":"Accountant with Excel","query":"حسابداری با مهارت Excel در تهران","goal":"Find accounting roles whose title or description explicitly mentions Excel","must":["accounting family","Excel evidence in job content","Tehran"],"reject":["Excel mentioned only in company name","generic support roles"]},
+    {"id":"petrochemical-mahshahr","persona":"Petrochemical worker","query":"پتروشیمی ماهشهر","goal":"Find work in the requested industry and city","must":["petrochemical evidence","Mahshahr location","source link"],"reject":["Tehran-only office vacancy","unverified location"]},
+    {"id":"process-asaluyeh","persona":"Process engineer","query":"مهندس فرایند در عسلویه","goal":"Find process engineering work in Asaluyeh","must":["process engineering family","Asaluyeh"],"reject":["business process analyst with no engineering evidence"]},
+    {"id":"support","persona":"Support specialist","query":"کارشناس پشتیبانی","goal":"Find customer or technical support vacancies without accounting false positives","must":["support title evidence"],"reject":["accountant whose description merely mentions support"]},
+    {"id":"sales-supervisor","persona":"Sales supervisor","query":"سرپرست فروش در شیراز","goal":"Find a supervisory sales role, not an entry-level sales position","must":["sales family","supervisory title","Shiraz"],"reject":["junior sales representative","unknown city"]},
+    {"id":"operations-manager","persona":"Operations manager","query":"مدیر عملیات در تهران","goal":"Find operations management opportunities","must":["operations family","management title","Tehran"],"reject":["unrelated engineering role","junior operator"]},
+    {"id":"skill-python","persona":"Developer","query":"Python developer","goal":"Compare relevant Python vacancies from more than one source","must":["Python evidence","direct source links","consistent factual cards"],"reject":["duplicate source URLs","invented compensation units"]},
+    {"id":"recent-product","persona":"Product manager","query":"مدیر محصول در ۷ روز اخیر","goal":"See only dated product management roles inside the requested period","must":["product management title","known date within 7 days"],"reject":["unknown posting date","product designer"]},
+    {"id":"ambiguous-career","persona":"Career changer","query":"تجربه حسابداری دارم و با Excel کار کردم، چه موقعیتی مناسبمه؟","goal":"Interpret the user's background without forcing them to invent keywords","must":["model interpretation or visible fallback","accounting-related suggestions grounded in actual listings"],"reject":["fabricated skills","irrelevant generic manager jobs"]},
+    {"id":"unavailable","persona":"Any job seeker","query":"کارشناس حسابداری","condition":"all providers inaccessible","goal":"Understand the failure and recover without mistaking it for no vacancies","must":["clear source availability message","retry path","no fabricated jobs"]},
+    {"id":"history-mobile","persona":"Returning job seeker","query":"Python developer","goal":"Reload, reopen the search, distinguish cached evidence, rerun or delete it","must":["390px usability","history restored","cache notice","resume not persisted","delete action"]}
+  ],
+  "comparison_protocol":{
+    "baselines":["Jobinja","Google"],
+    "procedure":"For each persona use the same intent, location and recency constraints. Record the first 3 useful unique vacancies, source URLs, elapsed time and actions required. Verify the original pages and label relevance before scoring. A model judge is supporting evidence, not a human label.",
+    "metrics":["useful unique vacancies at 3","hard-constraint violations","time to first useful vacancy","actions to an application source","incremental useful vacancies beyond baseline","duplicate leakage","unexplained failures"],
+    "status":"Not yet completed against production; do not claim an advantage over baselines without paired evidence."
+  }
+}

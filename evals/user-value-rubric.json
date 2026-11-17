@@ -1,0 +1,15 @@
+{
+  "version":"user-value/1",
+  "principle":"A completed request is not a successful job search. Measure whether a user can identify and open a relevant vacancy under their explicit constraints.",
+  "dimensions":{
+    "model_relevance_at_3":{"range":[0,1],"method":"relevant=1, partial=0.5, irrelevant=0; uncertain is unscored","limitation":"Model assessment, not human ground truth"},
+    "hard_constraint_accuracy":{"range":[0,1],"method":"Share of returned jobs satisfying explicit supported location and date constraints; unknown evidence fails an explicit constraint"},
+    "actionable_result_ratio":{"range":[0,1],"method":"Share with title, employer and an HTTP(S) original source URL","limitation":"Does not establish that a link is reachable or vacancy is open"},
+    "duplicate_url_rate":{"range":[0,1],"method":"Repeated source URLs divided by returned result count; lower is better"},
+    "source_availability":{"range":[0,1],"method":"Sources returning parsable listings divided by sources attempted","limitation":"Not market coverage or recall"},
+    "retrieval_runtime_ms":{"range":[0,105000],"method":"Interpretation, source retrieval and enrichment/ranking duration; full response time is measured separately in the client and root trace"},
+    "human_task_success":{"method":"Reviewed user can find a relevant vacancy and open its source without assistance","status":"Requires actual journey review"},
+    "incremental_value_over_baseline":{"method":"Paired reviewed comparison against Jobinja and Google for the same intent","status":"Requires actual baseline comparison"}
+  },
+  "release_requirements":["No supported hard-constraint violations","No fabricated salaries, employers, dates or source links","Unavailable sources never represented as zero jobs","No result counts or pass scores for unassessed relevance","History, cancel, retry, uploads and description expansion usable at 390px","Original source pages and live production MCP checked"]
+}
