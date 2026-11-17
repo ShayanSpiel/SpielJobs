@@ -46,4 +46,4 @@ Evaluation is awaited and bounded within the request lifecycle, including trace 
 
 ## Release gate
 
-Passing offline tests is necessary but insufficient. Release requires source/model connectivity from the hosting region, live API/SSE/MCP checks, reviewed Persian/English relevance cases, résumé checks, mobile journey checks, shared quotas, real Langfuse trace retrieval and a verified production URL. `scripts/audit_sources.py` records real adapter failures without pretending to measure recall. See `docs/DEPLOYMENT.md` and `HANDOFF.md` for current evidence and blockers.
+Passing offline tests is necessary but insufficient. Release requires source/model connectivity from the hosting region, live API/SSE/MCP checks, reviewed Persian/English relevance cases, résumé checks, mobile journey checks, shared quotas, real Langfuse trace retrieval and a verified production URL. `scripts/audit_sources.py` records real adapter failures without pretending to measure recall. See `docs/DEPLOYMENT.md` for the deployment and live acceptance procedure.

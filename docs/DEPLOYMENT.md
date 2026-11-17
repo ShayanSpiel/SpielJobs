@@ -24,4 +24,4 @@ Add **`job.spielos.xyz`** to the frontend project. Use exactly the DNS target re
 
 Run `npm run check` and build the frontend. Run `scripts/audit_sources.py` from the hosting region. Exercise the real personas in `evals/personas.json`, including skill-only, non-Tehran, management, date-constrained and unavailable-source journeys. Check original application pages; do not infer vacancy status from HTTP 200 alone. Verify streamed progress, cancel/retry, PDF/DOCX, history reload/delete, source expansion, two-line descriptions and mobile navigation. Initialize MCP, list tools and call the live tool through the production URL. Retrieve a real Langfuse root trace and numeric/categorical scores from the matching project.
 
-A local production build is not a published deployment. The current account/authentication and execution limitations are recorded in `docs/RELEASE-REVIEW.md` and `HANDOFF.md`.
+Source is published at https://github.com/ShayanSpiel/SpielJobs. Deployment and live acceptance remain separate release gates; use the checks above after creating both Vercel projects.

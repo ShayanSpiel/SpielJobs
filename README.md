@@ -19,7 +19,7 @@ Create **two projects** from the same repository:
 | `spieljobs-api` | `backend` | FastAPI | Server-side model/tracing keys, shared Redis quota credentials, allowed origins |
 | `spieljobs` | `frontend` | Next.js | `SPIELJOBS_API_URL` set to the deployed HTTPS API origin |
 
-Deploy the backend first, then the frontend. Set the intended frontend domain to `job.spielos.xyz` only after Vercel supplies the correct DNS record. Production search fails closed without shared quota configuration. See [deployment details](docs/DEPLOYMENT.md), [architecture](ARCHITECTURE.md), and [current release evidence](docs/RELEASE-REVIEW.md).
+Deploy the backend first, then the frontend. Set the intended frontend domain to `job.spielos.xyz` only after Vercel supplies the correct DNS record. Production search fails closed without shared quota configuration. See [deployment details](docs/DEPLOYMENT.md), [architecture](ARCHITECTURE.md), and [search quality criteria](docs/SEARCH-QUALITY.md).
 
 ## MCP
 
