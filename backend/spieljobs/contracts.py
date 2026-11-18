@@ -78,10 +78,15 @@ class SourceMaintenance(ValueError):
     pass
 
 
+class SourceAccessRestricted(ValueError):
+    pass
+
+
 def source_failure(exc):
     """Machine-readable cause, safe for UI and monitoring without raw responses."""
     import httpx
     if isinstance(exc, SourceMaintenance): return 'source_maintenance',None
+    if isinstance(exc, SourceAccessRestricted): return 'blocked',None
     if isinstance(exc, httpx.HTTPStatusError):
         status = exc.response.status_code
         return ('rate_limited' if status == 429 else 'blocked' if status in (401,403) else 'not_found' if status in (404,410) else 'http_error'), status
