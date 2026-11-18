@@ -80,8 +80,20 @@ async def collect_extra(terms, progress=None):
                 with observation('spieljobs.source.'+source['id'],'retriever',input={'query':safe_text(term,150) if term else None}) as span:
                     try:
                         async with asyncio.timeout(SOURCE_BUDGET_SECONDS):
+                            async def company_list(company_id):
+                                stats['requests'] += 1
+                                response=await client.post('https://candidateapi.jobvision.ir/api/v1/JobPost/List',headers={'Origin':'https://jobvision.ir','Referer':'https://jobvision.ir/'},json={'companyId':company_id,'sortBy':1,'pageSize':100,'requestedPage':1})
+                                response.raise_for_status()
+                                envelope=response.json()
+                                data=envelope.get('data') if isinstance(envelope,dict) and envelope.get('isSuccess',True) else None
+                                jobs=parse_jobvision(data)
+                                if any(str((row.get('company') or {}).get('id'))!=str(company_id) for row in data['jobPosts']):
+                                    raise ValueError('Jobvision company filter was not honored')
+                                stats['schema_verified']=True
+                                return jobs
+
                             async def fetch():
-                                if source['id'] == 'jobvision' or source['kind'] in ('jobvision_company', 'recrupen'):
+                                if source['id'] == 'jobvision' or source['kind'] == 'recrupen':
                                     stats['requests'] += 1
                                 if source['id']=='jobvision':
                                     response=await client.post('https://candidateapi.jobvision.ir/api/v1/JobPost/List',headers={'Origin':'https://jobvision.ir','Referer':'https://jobvision.ir/','Accept':'application/json'},json={'keyword':term,'sortBy':1,'searchId':None,'pageSize':100,'requestedPage':1})
@@ -89,14 +101,7 @@ async def collect_extra(terms, progress=None):
                                     if not isinstance(envelope,dict) or envelope.get('isSuccess') is False: raise ValueError('Jobvision rejected query')
                                     jobs=parse_jobvision(envelope.get('data'))
                                 elif source['kind']=='jobvision_company':
-                                    response=await client.post('https://candidateapi.jobvision.ir/api/v1/JobPost/List',headers={'Origin':'https://jobvision.ir','Referer':'https://jobvision.ir/'},json={'companyId':source['company_id'],'sortBy':1,'pageSize':100,'requestedPage':1})
-                                    response.raise_for_status()
-                                    envelope=response.json()
-                                    data=envelope.get('data') if isinstance(envelope,dict) and envelope.get('isSuccess',True) else None
-                                    jobs=parse_jobvision(data)
-                                    if any(str((row.get('company') or {}).get('id'))!=str(source['company_id']) for row in data['jobPosts']):
-                                        raise ValueError('Jobvision company filter was not honored')
-                                    stats['schema_verified']=True
+                                    jobs=await company_list(source['company_id'])
                                 elif source['kind']=='recrupen':
                                     response=await client.get(source['api_url'],headers={'x-company-id':str(source['company_id'])})
                                     response.raise_for_status()
@@ -106,7 +111,14 @@ async def collect_extra(terms, progress=None):
                                     jobs=await fetch_hrcando(client,source,stats)
                                 else:
                                     if source['kind']=='html':
-                                        jobs=await fetch_html_jobs(client,source,stats)
+                                        try:
+                                            jobs=await fetch_html_jobs(client,source,stats)
+                                        except (httpx.ConnectError,httpx.TimeoutException):
+                                            company_id=source.get('jobvision_fallback_id')
+                                            if company_id is None:
+                                                raise
+                                            jobs=await company_list(company_id)
+                                            stats['fallback_provider']='jobvision'
                                     else:
                                         response=await fetch_career_page(client,source,stats)
                                         jobs=parse_career({**source,'url':str(response.url)},response.json())
@@ -128,9 +140,12 @@ async def collect_extra(terms, progress=None):
                         state='partial' if jobs else ('success' if recognized and not rejected else 'unverified')
                         report={**source,'state':state,'checked_at':checked,'requests':stats['requests'],'rejected_rows':rejected,'retry_count':stats.get('retry_count',0),'message':'Validated listing response returned no vacancies for this request.' if state=='success' else 'Bounded listing retrieval; source coverage and status require verification.'}
                         if state=='unverified': report['failure_kind']='schema_changed'
+                        if stats.get('fallback_provider'):
+                            report.update(provider=stats['fallback_provider'],
+                                message='Employer listings were retrieved from its verified Jobvision company page after a connection failure on its careers site.')
                         span.update(level='WARNING' if state=='unverified' else 'DEFAULT',
                             status_message='Unrecognized listing structure' if state=='unverified' else None,
-                            output={'state':state,'count':len(jobs),'failure_kind':report.get('failure_kind'),'jobs':summarize_jobs(jobs,30)})
+                            output={'state':state,'count':len(jobs),'failure_kind':report.get('failure_kind'),'provider':report.get('provider'),'jobs':summarize_jobs(jobs,30)})
                         if source['id'] != 'jobvision' and state in ('partial', 'success'):
                             _career_cache[source['id']] = (time.monotonic(), deepcopy((jobs, report)))
                             await save_snapshot(client, source, jobs, report)
