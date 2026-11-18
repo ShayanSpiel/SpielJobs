@@ -1,9 +1,13 @@
 /** One public origin; the Python service stays independently deployable. */
 const apiOrigin = process.env.SPIELJOBS_API_URL
+let usesSupabase = false
 if (apiOrigin) {
   const url = new URL(apiOrigin)
-  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash || url.pathname !== '/') {
-    throw new Error('SPIELJOBS_API_URL must be an HTTP(S) origin without credentials or a path')
+  usesSupabase = url.protocol === 'https:' &&
+    /^[a-z0-9]{20}\.supabase\.co$/.test(url.hostname) &&
+    /^\/functions\/v1\/spieljobs\/?$/.test(url.pathname) && !url.port
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash || (url.pathname !== '/' && !usesSupabase)) {
+    throw new Error('SPIELJOBS_API_URL must be an HTTP(S) origin or the SpielJobs Supabase Edge Function URL')
   }
   if (process.env.VERCEL && url.protocol !== 'https:') throw new Error('Production API must use HTTPS')
 }
@@ -13,6 +17,7 @@ const nextConfig = {
   env: {
     // Expose only the availability of the server-side rewrite.
     NEXT_PUBLIC_SPIELJOBS_API_PROXY: apiOrigin ? 'true' : 'false',
+    NEXT_PUBLIC_SPIELJOBS_RESUME_UPLOAD: !usesSupabase || process.env.NEXT_PUBLIC_API_URL ? 'true' : 'false',
   },
   skipTrailingSlashRedirect:true,
   async rewrites() {
