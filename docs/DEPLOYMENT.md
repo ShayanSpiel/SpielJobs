@@ -25,3 +25,11 @@ Add **`job.spielos.xyz`** to the frontend project. Use exactly the DNS target re
 Run `npm run check` and build the frontend. Run `scripts/audit_sources.py` from the hosting region. Exercise the real personas in `evals/personas.json`, including skill-only, non-Tehran, management, date-constrained and unavailable-source journeys. Check original application pages; do not infer vacancy status from HTTP 200 alone. Verify streamed progress, cancel/retry, PDF/DOCX, history reload/delete, source expansion, two-line descriptions and mobile navigation. Initialize MCP, list tools and call the live tool through the production URL. Retrieve a real Langfuse root trace and numeric/categorical scores from the matching project.
 
 Source is published at https://github.com/ShayanSpiel/SpielJobs. Deployment and live acceptance remain separate release gates; use the checks above after creating both Vercel projects.
+
+## Supabase Edge pilot
+
+The TypeScript function in `supabase/functions/spieljobs` is an independent backend for live keyword search on Jobinja and Jobvision, using Supabase Postgres to enforce a shared quota. It supports JSON search, streamed web results, and stateless HTTP MCP. The Python service still has broader source coverage, query interpretation, résumé parsing, and telemetry. The Edge pilot does not offer these capabilities.
+
+Link the intended Supabase project, apply the quota migration, then deploy the `spieljobs` Edge Function. Its gateway JWT check is disabled for anonymous search. The function admits search requests only through the service-role-only database quota. Verify the function's `/health` endpoint and confirm anonymous cannot invoke the quota RPC directly. Then verify `/search/stream` and initialize, list, and call tools at `/mcp`.
+
+Set the frontend's `SPIELJOBS_API_URL` to `https://<project-ref>.supabase.co/functions/v1/spieljobs` and remove any direct API override. Set `NEXT_PUBLIC_MCP_URL` to the verified function URL with `/mcp` appended. Redeploy the frontend. The frontend hides résumé upload when configured for this pilot.
