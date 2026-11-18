@@ -7,12 +7,13 @@ if (apiOrigin) {
   }
   if (process.env.VERCEL && url.protocol !== 'https:') throw new Error('Production API must use HTTPS')
 }
-if (process.env.VERCEL_ENV === 'production' && !apiOrigin && !process.env.NEXT_PUBLIC_API_URL) {
-  throw new Error('Set SPIELJOBS_API_URL before deploying the production frontend')
-}
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
   poweredByHeader: false,
+  env: {
+    // Expose only the availability of the server-side rewrite.
+    NEXT_PUBLIC_SPIELJOBS_API_PROXY: apiOrigin ? 'true' : 'false',
+  },
   skipTrailingSlashRedirect:true,
   async rewrites() {
     const routes=apiOrigin ? [{ source: '/api/runtime/:path*', destination: `${apiOrigin.replace(/\/$/, '')}/:path*` }] : []
