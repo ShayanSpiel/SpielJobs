@@ -17,11 +17,11 @@ CAREERS=[
  {'id':'nobitex','name':'Nobitex','label':'نوبیتکس','site_url':'https://nobitex.ir','url':'https://nobitex.ir/jobs/','kind':'html'},
  {'id':'doctoreto','name':'Doctoreto','label':'دکترتو','site_url':'https://doctoreto.com','url':'https://careers.doctoreto.com/','kind':'html'},
  {'id':'digiexpress','name':'Digiexpress','label':'دیجی‌اکسپرس','site_url':'https://digiexpress.ir','url':'https://careers.digiexpress.ir/opportunities','kind':'html','title_selector':'div.flex-col > span','card_fields':{'location':'span:has(svg.lucide-map-pin)','contract':'span:has(svg.lucide-clock)','category':'span:has(svg.lucide-users)'}},
- {'id':'mrbilit','name':'Mrbilit','label':'مستربلیط','site_url':'https://mrbilit.com','url':'https://careers.mrbilit.com/','kind':'html'},
+ {'id':'mrbilit','name':'Mrbilit','label':'مستربلیط','site_url':'https://mrbilit.com','url':'https://career.hrcando.ir/co/MrBilit-1-1','kind':'hrcando','verification':'employer-published-ats-link'},
  {'id':'karnameh','name':'Karnameh','label':'کارنامه','site_url':'https://karnameh.com','url':'https://careers.karnameh.com/','kind':'html'},
  {'id':'blubank','name':'Blubank','label':'بلوبانک','site_url':'https://blubank.com','url':'https://careers.blubank.ir/','kind':'html'},
  {'id':'shab','name':'Shab','label':'شب','site_url':'https://shab.ir','url':'https://www.shab.ir/careers','kind':'html'},
- {'id':'arvancloud','name':'Arvancloud','label':'آروان‌کلاد','site_url':'https://arvancloud.ir','url':'https://r1c.ir/jobs','kind':'html'},
+ {'id':'arvancloud','name':'Arvancloud','label':'آروان‌کلاد','site_url':'https://arvancloud.ir','url':'https://www.arvancloud.ir/fa/jobs','kind':'html','access_challenge_marker':'__arcsjsc'},
 ]
 
 
