@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { site } from '@/lib/site'
 import './globals.css'
 
+const searchImage = { url: '/og-search.jpg', width: 1200, height: 630, alt: 'SpielJobs — جست‌وجوی شغل در ایران' }
+
 export const metadata: Metadata = {
   metadataBase:new URL(site.origin),
   title:{default:site.title,template:'%s | SpielJobs'},
@@ -9,8 +11,8 @@ export const metadata: Metadata = {
   authors:[{name:site.author,url:site.links.home}],
   applicationName:site.name,
   alternates:{canonical:'/'},
-  openGraph:{type:'website',url:site.origin,siteName:site.name,locale:'fa_IR',title:site.title,description:site.description,images:[{url:'/og-image.png',width:1200,height:630,alt:'SpielJobs — جست‌وجوی شغل در ایران'}]},
-  twitter:{card:'summary_large_image',site:'@ShayanSpiel',creator:'@ShayanSpiel',title:site.title,description:site.description,images:['/og-image.png']},
+  openGraph:{type:'website',url:site.origin,siteName:site.name,locale:'fa_IR',title:site.title,description:site.description,images:[searchImage]},
+  twitter:{card:'summary_large_image',site:'@ShayanSpiel',creator:'@ShayanSpiel',title:site.title,description:site.description,images:[searchImage]},
   icons:{icon:[{url:'/favicon.svg',type:'image/svg+xml'},{url:'/icon-32.png',sizes:'32x32',type:'image/png'},{url:'/favicon.ico',sizes:'any'}],apple:[{url:'/apple-touch-icon.png',sizes:'180x180'}]},
   manifest:'/site.webmanifest',
   robots:{index:true,follow:true},
