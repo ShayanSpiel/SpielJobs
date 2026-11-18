@@ -6,6 +6,22 @@ const boards = [
 ] as const
 
 type Board = typeof boards[number]
+type SourceReport = Board & {
+  checked_at: string
+  state: 'partial' | 'success' | 'unavailable' | 'unverified'
+  matched_count: number
+  failure_kind?: string
+  http_status?: number
+  searches?: {term: string; url: string}[]
+}
+
+export const pendingSources = () => boards.map(board => ({...board, state:'searching', checked_at:null}))
+
+class SourceHttpError extends Error {
+  constructor(readonly status: number) {
+    super('Source HTTP ' + status)
+  }
+}
 type Job = {
   title: string
   url: string
@@ -23,7 +39,7 @@ function clean(value: unknown, max = 200) {
 
 async function readSource(url: URL, signal: AbortSignal, init: RequestInit = {}) {
   const response = await fetch(url, {...init, signal: AbortSignal.any([signal, AbortSignal.timeout(8000)])})
-  if (!response.ok) throw new Error('Source HTTP ' + response.status)
+  if (!response.ok) throw new SourceHttpError(response.status)
   if (!response.body) throw new Error('Missing source body')
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
@@ -107,14 +123,14 @@ export function parseJobvision(value: unknown, checked_at: string): Job[] {
   })
 }
 
-async function collect(board: Board, query: string, signal: AbortSignal) {
+async function collect(board: Board, query: string, signal: AbortSignal): Promise<{jobs: Job[]; source: SourceReport}> {
   const checked_at = new Date().toISOString()
+  const jobinjaUrl = new URL('https://jobinja.ir/jobs')
+  jobinjaUrl.searchParams.set('filters[keywords][]', query)
   try {
     let jobs: Job[]
     if (board.id === 'jobinja') {
-      const url = new URL('https://jobinja.ir/jobs')
-      url.searchParams.set('filters[keywords][]', query)
-      jobs = parseJobinja(await readSource(url, signal), checked_at)
+      jobs = parseJobinja(await readSource(jobinjaUrl, signal), checked_at)
       if (!jobs.length) return {jobs, source:{...board, checked_at, state:'unverified', matched_count:0}}
     } else {
       const url = new URL('https://candidateapi.jobvision.ir/api/v1/JobPost/List')
@@ -125,13 +141,25 @@ async function collect(board: Board, query: string, signal: AbortSignal) {
     }
     return {jobs, source:{...board, checked_at, state:jobs.length ? 'partial' : 'success', matched_count:jobs.length}}
   } catch (error) {
-    const timeout = error instanceof DOMException && error.name === 'TimeoutError'
-    return {jobs:[], source:{...board, checked_at, state:'unavailable', failure_kind: timeout ? 'timeout' : 'connection_failed', matched_count:0}}
+    const http_status = error instanceof SourceHttpError ? error.status : undefined
+    const failure_kind = http_status === 403 || http_status === 401 ? 'blocked'
+      : http_status === 429 ? 'rate_limited'
+      : http_status === 404 ? 'not_found'
+      : http_status ? 'http_error'
+      : error instanceof DOMException && error.name === 'TimeoutError' ? 'timeout'
+      : 'connection_failed'
+    console.warn(JSON.stringify({event:'source_unavailable', source:board.id, failure_kind, http_status}))
+    const searches = board.id === 'jobinja' ? [{term:query, url:jobinjaUrl.href}] : undefined
+    return {jobs:[], source:{...board, checked_at, state:'unavailable', failure_kind, http_status, matched_count:0, searches}}
   }
 }
 
-export async function searchJobs(query: string, signal: AbortSignal) {
-  const collected = await Promise.all(boards.map(board => collect(board, query, signal)))
+export async function searchJobs(query: string, signal: AbortSignal, onSource?: (source: SourceReport) => void) {
+  const collected = await Promise.all(boards.map(async board => {
+    const result = await collect(board, query, signal)
+    onSource?.(result.source)
+    return result
+  }))
   const jobs = Array.from(new Map(collected.flatMap(response => response.jobs).map(job => [job.url, job])).values())
   return {jobs:jobs.map(job => ({...job, match_terms:[], description:null,
     status_evidence:'Observed in the public source listing. Application availability has not been verified.'})), sources:collected.map(response => response.source), run_id:crypto.randomUUID(),
