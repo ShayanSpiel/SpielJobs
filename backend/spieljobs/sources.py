@@ -287,7 +287,13 @@ async def _jobinja(query, province=None):
 async def jobinja(query, province=None):
     with observation('spieljobs.jobinja.request', 'tool', input={'search_query':safe_text(query,200)}) as span:
         jobs, report=await _jobinja(query,province=province) if province else await _jobinja(query)
-        span.update(output={'result_count':len(jobs), 'source_state':report['state'], 'jobs':summarize_jobs(jobs,30)}, level='ERROR' if report['state']=='unavailable' else 'DEFAULT')
+        span.update(
+            output={'result_count': len(jobs), 'source_state': report['state'],
+                    'failure_kind': report.get('failure_kind'),
+                    'http_status': report.get('http_status'),
+                    'jobs': summarize_jobs(jobs, 30)},
+            level='ERROR' if report['state'] == 'unavailable' else 'DEFAULT',
+        )
         return jobs, report
 
 async def collect(terms, progress=None, location=None):
