@@ -12,7 +12,7 @@ Set environment variables from `.env.example` through Vercel's encrypted environ
 
 ## 2. Frontend
 
-Import the same repository with root directory **`frontend`**, framework **Next.js**, install `npm ci`, build `npm run build`. Set **`SPIELJOBS_API_URL=https://<deployed-backend-host>`** with no path or credentials. Requests use the same-origin `/api/runtime/*` rewrite. A production frontend build refuses missing API configuration. A direct `NEXT_PUBLIC_API_URL` override is also supported, but requires matching backend CORS.
+Import the same repository with root directory **`frontend`**, framework **Next.js**, install `npm ci`, build `npm run build`. Set **`SPIELJOBS_API_URL=https://<deployed-backend-host>`** with no path or credentials. Requests use the same-origin `/api/runtime/*` rewrite. The frontend can build before the backend is configured. Search and résumé upload stay disabled until you set the backend origin and redeploy the frontend. A direct `NEXT_PUBLIC_API_URL` override is also supported, but requires matching backend CORS.
 
 After API/MCP verification, set `NEXT_PUBLIC_MCP_URL` to the verified public MCP endpoint and `NEXT_PUBLIC_PROJECT_REPOSITORY` to the actual GitHub repository. These are build-time public values. The page must not advertise an unverified endpoint or a nonexistent repository.
 
