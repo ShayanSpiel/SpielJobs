@@ -118,3 +118,27 @@ class SourceResilienceTests(unittest.IsolatedAsyncioTestCase):
         report = next(r for r in reports if r['id'] == self.source['id'])
         self.assertFalse(jobs)
         self.assertEqual((report['state'], report['failure_kind']), ('unavailable', 'blocked'))
+
+    async def test_employer_feed_retains_primary_retrieval_failure(self):
+        self.source.update(kind='html', jobvision_fallback_id=581,
+                           unavailable_marker='scheduled maintenance')
+
+        for status, page, failure in [
+            (403, '', 'blocked'),
+            (200, '<p>scheduled maintenance</p>', 'source_maintenance'),
+            (200, '<div>Loading...</div>', 'schema_changed'),
+        ]:
+            with self.subTest(failure=failure):
+                sources._career_cache.clear()
+
+                def handler(request):
+                    if request.url.host == 'example.org':
+                        return httpx.Response(status, text=page)
+                    return httpx.Response(200, json={'data': {'jobPosts': []}})
+
+                _, reports = await self.collect(handler)
+                report = next(r for r in reports if r['id'] == self.source['id'])
+                self.assertEqual(report['state'], 'success')
+                self.assertEqual(report['provider'], 'jobvision')
+                self.assertEqual(report['primary_failure_kind'], failure)
+                self.assertEqual(report['primary_http_status'], 403 if status == 403 else None)
