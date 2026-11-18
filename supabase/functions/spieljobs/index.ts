@@ -1,7 +1,7 @@
 import { McpServer } from 'npm:@modelcontextprotocol/sdk@1.32.2/server/mcp.js'
 import { WebStandardStreamableHTTPServerTransport } from 'npm:@modelcontextprotocol/sdk@1.32.2/server/webStandardStreamableHttp.js'
 import { z } from 'npm:zod@3.25.76'
-import { searchJobs } from './search.ts'
+import { pendingSources, searchJobs } from './search.ts'
 
 const endpoint = Deno.env.get('SUPABASE_URL')
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
@@ -89,8 +89,13 @@ Deno.serve(async request => {
     async start(controller) {
       const encoder = new TextEncoder()
       const send = (name: string, data: unknown) => controller.enqueue(encoder.encode('event: ' + name + '\ndata: ' + JSON.stringify(data) + '\n\n'))
-      send('status', {phase:'search'})
-      try { send('result', await searchJobs(parsed.query, request.signal)) }
+      send('status', {phase:'search', group:'job_boards', sources:pendingSources()})
+      try {
+        const result = await searchJobs(parsed.query, request.signal, source => {
+          if (!request.signal.aborted) send('source_progress', {group:'job_boards', sources:[source]})
+        })
+        send('result', result)
+      }
       catch { if (!request.signal.aborted) send('error', {message:'جست‌وجو متوقف شد.'}) }
       finally { controller.close() }
     },
