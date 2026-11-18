@@ -13,8 +13,9 @@ from pydantic import BaseModel, Field, field_validator
 
 from .agent import search_events, search_jobs
 from .analytics import analytics_context
-from .guards import RequestGuards
+from .guards import RequestGuards, shared_quota_configured
 from .resumes import extract_resume
+from .sources import active_sources
 from .tracing import observation, flush_trace_client, trace_scope
 from .mcp_server import mcp
 
@@ -59,7 +60,8 @@ async def validation_error(request: Request, exc):
 async def health():
     return {'ok': True, 'runtime_revision': REVISION,
         'langfuse_configured': bool(os.getenv('LANGFUSE_PUBLIC_KEY') and os.getenv('LANGFUSE_SECRET_KEY')),
-        'shared_rate_limit_configured': bool(os.getenv('UPSTASH_REDIS_REST_URL') and os.getenv('UPSTASH_REDIS_REST_TOKEN'))}
+        'shared_rate_limit_configured': shared_quota_configured(),
+        'sources': [source['id'] for source in active_sources()]}
 
 
 @app.post('/search')
