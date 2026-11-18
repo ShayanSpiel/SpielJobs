@@ -138,6 +138,7 @@ a:focus-visible,button:focus-visible,textarea:focus-visible{outline:2px solid va
 .provider-logo .bx{font-size:12px;color:var(--muted)}
 .chip-divider{width:1px;height:12px;background:var(--line-strong)}
 .chip-status{color:var(--faint);font-size:9px}
+.source-search-link{color:var(--text);text-decoration:underline;text-underline-offset:2px}
 .source-summary>p{font-size:10px;line-height:2;color:var(--faint);margin-top:10px}
 .composer-error,.message-error,.notice{font-size:11px;line-height:2;color:var(--muted);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
 .notice{display:flex;gap:6px;align-items:center;margin-bottom:15px}
