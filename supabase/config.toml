@@ -1,0 +1,3 @@
+[functions.spieljobs]
+# Search is public and the function enforces a server-only database quota.
+verify_jwt = false
