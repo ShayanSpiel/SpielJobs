@@ -11,7 +11,7 @@ export const site = {
     linkedin: 'https://www.linkedin.com/in/shayantawabi/',
     x: 'https://x.com/ShayanSpiel',
     github: 'https://github.com/ShayanSpiel',
-    repository: process.env.NEXT_PUBLIC_PROJECT_REPOSITORY || '',
+    repository: process.env.NEXT_PUBLIC_PROJECT_REPOSITORY || 'https://github.com/ShayanSpiel/SpielJobs',
   },
 } as const
 
