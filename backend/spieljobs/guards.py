@@ -1,6 +1,6 @@
-"""HTTP abuse controls. Redis counters are shared across serverless instances.
+"""HTTP abuse controls. Shared counters cover all production instances.
 
-The local fallback only protects a single process; configure Redis for a public
+The local fallback only protects a single process; configure a shared quota for a public
 release. No query, resume, or raw IP is stored in the counters.
 """
 import asyncio
@@ -15,13 +15,18 @@ from starlette.responses import JSONResponse
 MAX_BODY = 2_100_000
 
 
+def shared_quota_configured():
+    redis = os.getenv('UPSTASH_REDIS_REST_URL') and os.getenv('UPSTASH_REDIS_REST_TOKEN')
+    return bool(redis or os.getenv('SPIELJOBS_SUPABASE_QUOTA_URL'))
+
+
 class RequestGuards:
     def __init__(self, app):
         self.app = app
         self.windows = OrderedDict()
         self.active = 0
 
-    async def allow(self, identity):
+    async def allow(self, identity, oidc_token=None):
         limit = int(os.getenv('SPIELJOBS_REQUESTS_PER_MINUTE', '10'))
         bucket = int(time.time() // 60)
         digest = hashlib.sha256(identity.encode()).hexdigest()[:32]
@@ -42,6 +47,21 @@ class RequestGuards:
                     return int(count) <= limit and int(total) <= int(os.getenv('SPIELJOBS_GLOBAL_REQUESTS_PER_MINUTE', '120'))
             except (httpx.HTTPError, ValueError, KeyError, TypeError):
                 # A broken shared limiter must not silently open paid endpoints.
+                return None
+        quota_url = os.getenv('SPIELJOBS_SUPABASE_QUOTA_URL')
+        if quota_url:
+            if not oidc_token:
+                return None
+            try:
+                async with httpx.AsyncClient(timeout=5) as client:
+                    response = await client.post(quota_url, headers={
+                        'Authorization': f'Bearer {oidc_token}',
+                        'X-SpielJobs-Client-Hash': digest,
+                    })
+                    response.raise_for_status()
+                    allowed = response.json()
+                    return allowed if isinstance(allowed, bool) else None
+            except (httpx.HTTPError, ValueError):
                 return None
         if os.getenv('VERCEL_ENV') == 'production':
             # Never expose paid anonymous endpoints with process-local quotas
@@ -72,7 +92,8 @@ class RequestGuards:
         identity = (scope.get('client') or ('unknown',))[0]
         if os.getenv('VERCEL') == '1':
             identity = headers.get(b'x-vercel-forwarded-for', identity.encode()).decode().split(',')[0].strip()
-        allowed = await self.allow(identity)
+        oidc_token = headers.get(b'x-vercel-oidc-token', b'').decode('ascii', errors='ignore') if os.getenv('VERCEL') == '1' else None
+        allowed = await self.allow(identity, oidc_token)
         if allowed is None:
             return await JSONResponse({'detail': 'Request limits temporarily unavailable'}, 503)(scope, receive, send)
         if not allowed:
