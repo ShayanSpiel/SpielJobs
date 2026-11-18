@@ -11,7 +11,7 @@ export function historySnapshot(chats: Conversation[], now = Date.now()): Conver
       id: chat.id, title: chat.title.slice(0, 80), updatedAt: chat.updatedAt,
       messages: chat.messages.slice(-30).map(message => {
         // Whitelist persisted fields. Uploaded file contents and filename are excluded.
-        const saved: Message = { id: message.id, role: message.role, text: message.text?.slice(0, 2000), stopped: message.stopped, error: message.error }
+        const saved: Message = { id: message.id, role: message.role, text: message.text?.slice(0, 2000), stopped: message.stopped, error: message.error, usedResume: message.usedResume === true || undefined }
         if (message.result) saved.result = { jobs: message.result.jobs.slice(0, 50), sources: message.result.sources, warnings: message.result.warnings, model_used: message.result.model_used }
         else if (message.role === 'assistant' && !message.error) saved.stopped = true
         return saved
