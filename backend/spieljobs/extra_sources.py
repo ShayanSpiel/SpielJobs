@@ -87,7 +87,9 @@ async def collect_extra(terms, progress=None):
                                 envelope=response.json()
                                 data=envelope.get('data') if isinstance(envelope,dict) and envelope.get('isSuccess',True) else None
                                 jobs=parse_jobvision(data)
-                                if any(str((row.get('company') or {}).get('id'))!=str(company_id) for row in data['jobPosts']):
+                                if any(not isinstance(row, dict) or not isinstance(row.get('company'), dict)
+                                       or str(row['company'].get('id')) != str(company_id)
+                                       for row in data['jobPosts']):
                                     raise ValueError('Jobvision company filter was not honored')
                                 stats['schema_verified']=True
                                 return jobs
