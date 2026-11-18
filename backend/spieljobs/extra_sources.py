@@ -113,21 +113,32 @@ async def collect_extra(terms, progress=None):
                                     jobs=await fetch_hrcando(client,source,stats)
                                 else:
                                     if source['kind']=='html':
-                                        try:
-                                            jobs=await fetch_html_jobs(client,source,stats)
-                                        except (httpx.ConnectError,httpx.TimeoutException):
-                                            company_id=source.get('jobvision_fallback_id')
-                                            if company_id is None:
-                                                raise
-                                            jobs=await company_list(company_id)
-                                            stats['fallback_provider']='jobvision'
+                                        jobs=await fetch_html_jobs(client,source,stats)
                                     else:
                                         response=await fetch_career_page(client,source,stats)
                                         jobs=parse_career({**source,'url':str(response.url)},response.json())
                                 return jobs
-                            for attempt in range(2):
+
+                            async def fetch_with_fallback():
+                                company_id = source.get('jobvision_fallback_id')
+                                if company_id is None:
+                                    return await fetch()
                                 try:
                                     jobs = await fetch()
+                                except (httpx.HTTPError, ValueError, TypeError, KeyError) as exc:
+                                    failure, status = source_failure(exc)
+                                else:
+                                    if jobs or stats.get('schema_verified'):
+                                        return jobs
+                                    failure, status = 'schema_changed', None
+                                stats.update(primary_failure_kind=failure, primary_http_status=status)
+                                jobs = await company_list(company_id)
+                                stats['fallback_provider'] = 'jobvision'
+                                return jobs
+
+                            for attempt in range(2):
+                                try:
+                                    jobs = await fetch_with_fallback()
                                     break
                                 except (httpx.TimeoutException, httpx.ConnectError, httpx.HTTPStatusError) as exc:
                                     retryable = not isinstance(exc, httpx.HTTPStatusError) or exc.response.status_code in (502, 503, 504)
@@ -142,12 +153,15 @@ async def collect_extra(terms, progress=None):
                         state='partial' if jobs else ('success' if recognized and not rejected else 'unverified')
                         report={**source,'state':state,'checked_at':checked,'requests':stats['requests'],'rejected_rows':rejected,'retry_count':stats.get('retry_count',0),'message':'Validated listing response returned no vacancies for this request.' if state=='success' else 'Bounded listing retrieval; source coverage and status require verification.'}
                         if state=='unverified': report['failure_kind']='schema_changed'
+                        fallback = {}
                         if stats.get('fallback_provider'):
-                            report.update(provider=stats['fallback_provider'],
-                                message='Employer listings were retrieved from its verified Jobvision company page after a connection failure on its careers site.')
+                            fallback = {'provider': stats['fallback_provider'],
+                                        'primary_failure_kind': stats['primary_failure_kind'],
+                                        'primary_http_status': stats['primary_http_status']}
+                            report.update(fallback, message='The primary careers page could not be used. This employer’s listings were checked on its verified Jobvision company page.')
                         span.update(level='WARNING' if state=='unverified' else 'DEFAULT',
                             status_message='Unrecognized listing structure' if state=='unverified' else None,
-                            output={'state':state,'count':len(jobs),'failure_kind':report.get('failure_kind'),'provider':report.get('provider'),'jobs':summarize_jobs(jobs,30)})
+                            output={'state':state,'count':len(jobs),'failure_kind':report.get('failure_kind'),**fallback, 'jobs':summarize_jobs(jobs,30)})
                         if source['id'] != 'jobvision' and state in ('partial', 'success'):
                             _career_cache[source['id']] = (time.monotonic(), deepcopy((jobs, report)))
                             await save_snapshot(client, source, jobs, report)
@@ -155,7 +169,10 @@ async def collect_extra(terms, progress=None):
                     except (httpx.HTTPError,ValueError,TypeError,KeyError,TimeoutError) as exc:
                         failure, status = source_failure(exc)
                         report={**source,'failure_kind':failure,'http_status':status,'state':'unavailable','checked_at':checked,'requests':stats['requests'],'message':f'Source request or parsing failed: {type(exc).__name__}.'}
-                        span.update(level='WARNING',status_message=failure+(f' HTTP {status}' if status else ''),output={'state':'unavailable','failure_kind':failure,'http_status':status,'elapsed_ms':round((time.monotonic()-started)*1000),'requests':stats['requests'],'budget_seconds':SOURCE_BUDGET_SECONDS})
+                        if 'primary_failure_kind' in stats:
+                            report.update(primary_failure_kind=stats['primary_failure_kind'],
+                                          primary_http_status=stats['primary_http_status'])
+                        span.update(level='WARNING',status_message=failure+(f' HTTP {status}' if status else ''),output={'state':'unavailable','failure_kind':failure,'http_status':status,'elapsed_ms':round((time.monotonic()-started)*1000),'requests':stats['requests'],'budget_seconds':SOURCE_BUDGET_SECONDS,'primary_failure_kind':report.get('primary_failure_kind'),'primary_http_status':report.get('primary_http_status')})
                         # Only transient transport/server failures may use dated
                         # evidence. Maintenance, blocks, removed pages and schema
                         # changes must remain explicit failures.
@@ -201,21 +218,28 @@ async def collect_extra(terms, progress=None):
 
 async def enrich_extra(jobs):
     """Read Jobvision's own detail endpoint for the first ranked listings."""
-    candidates=[]
+    def post_id(url):
+        parsed = urlparse(url or '')
+        if parsed.scheme != 'https' or parsed.hostname != 'jobvision.ir':
+            return None
+        match = re.fullmatch(r'/jobs/(\d+)', parsed.path.rstrip('/'))
+        return match.group(1) if match else None
+
+    candidates = []
     for job in jobs:
-        evidence=next((item for item in job.get('sources',[]) if item.get('id')=='jobvision'),None)
-        if job.get('source')=='jobvision' or evidence:
-            candidates.append((job,evidence))
+        primary_id = post_id(job.get('url'))
+        evidence = next((item for item in job.get('sources', []) if post_id(item.get('url'))), None)
+        identity = primary_id or post_id((evidence or {}).get('url'))
+        if identity:
+            candidates.append((job, evidence, identity, primary_id == identity))
     candidates=candidates[:10]
     if not candidates: return
     semaphore=asyncio.Semaphore(4)
     async with httpx.AsyncClient(timeout=httpx.Timeout(5,connect=3),headers={'Origin':'https://jobvision.ir','Referer':'https://jobvision.ir/','Accept':'application/json'}) as client:
-        async def one(job,evidence):
-            match=re.fullmatch(r'/jobs/(\d+)',urlparse((evidence or {}).get('url') or job.get('url','')).path.rstrip('/'))
-            if not match:return
+        async def one(job,evidence,identity,is_primary):
             async with semaphore:
                 try:
-                    response=await client.get('https://candidateapi.jobvision.ir/api/v1/JobPost/Detail',params={'jobPostId':match.group(1)})
+                    response=await client.get('https://candidateapi.jobvision.ir/api/v1/JobPost/Detail',params={'jobPostId':identity})
                     response.raise_for_status(); body=response.json()
                     data=body.get('data') if isinstance(body,dict) and body.get('isSuccess',True) else None
                     if not isinstance(data,dict):return
@@ -226,8 +250,8 @@ async def enrich_extra(jobs):
                     if isinstance(years,(int,float)) and years>=0:job['experience']=f'{years} سال'
                     if isinstance(data.get('isExpired'),bool):
                         state='closed' if data['isExpired'] else 'open'
-                        if evidence is not None:evidence['status']=state
-                        if job.get('source')=='jobvision':job.update(status=state,status_evidence='Jobvision detail reports expired status.')
+                        if evidence is not None and post_id(evidence.get('url')) == identity:evidence['status']=state
+                        if is_primary:job.update(status=state,status_evidence='Jobvision detail reports expired status.')
                     company=data.get('company') or {}
                     logo=(company.get('logoUrl') or company.get('logo')) if isinstance(company,dict) else None
                     if isinstance(logo,dict):logo=logo.get('url')
@@ -236,6 +260,6 @@ async def enrich_extra(jobs):
                     if isinstance(website,str) and urlparse(website).scheme in ('http','https') and not job.get('website'):job['website']=website
                 except (httpx.HTTPError,ValueError,TypeError,KeyError):return
         with observation('spieljobs.jobvision.details','tool',input={'candidate_count':len(candidates)}) as span:
-            try: await asyncio.wait_for(asyncio.gather(*(one(job,evidence) for job,evidence in candidates)),timeout=8)
+            try: await asyncio.wait_for(asyncio.gather(*(one(*candidate) for candidate in candidates)),timeout=8)
             except asyncio.TimeoutError: pass
-            span.update(output={'with_description':sum(bool(job.get('description')) for job,_ in candidates)})
+            span.update(output={'with_description':sum(bool(job.get('description')) for job,*_ in candidates)})
