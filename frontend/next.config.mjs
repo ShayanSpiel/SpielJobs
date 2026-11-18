@@ -17,6 +17,7 @@ const nextConfig = {
   env: {
     // Expose only the availability of the server-side rewrite.
     NEXT_PUBLIC_SPIELJOBS_API_PROXY: apiOrigin ? 'true' : 'false',
+    NEXT_PUBLIC_SPIELJOBS_SUPABASE_SEARCH: usesSupabase && !process.env.NEXT_PUBLIC_API_URL ? 'true' : 'false',
     NEXT_PUBLIC_SPIELJOBS_RESUME_UPLOAD: !usesSupabase || process.env.NEXT_PUBLIC_API_URL ? 'true' : 'false',
   },
   skipTrailingSlashRedirect:true,
