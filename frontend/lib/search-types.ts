@@ -3,4 +3,4 @@ export type Job={title:string;company_logo_url?:string|null;company:string|null;
 export type Source={failure_kind?:string;http_status?:number|null;cache_hit?:boolean;cache_age_seconds?:number;refresh_failure_kind?:string;refresh_checked_at?:string;id?:string;name:string;label?:string;site_url?:string;icon_url?:string|null;fallback_logo_url?:string|null;state:string;message?:string;checked_at:string|null;requests?:number;matched_count?:number;terms?:string[];searches?:{term:string;url:string}[]}
 export type Result={jobs:Job[];sources:Source[];warnings:string[];model_used:string|null}
 export type Step={phase:string;group?:string;uses_model?:boolean;interpretation?:string;terms?:string[];sources?:Source[];found?:number}
-export type Message={id:string;role:'user'|'assistant';text?:string;filename?:string;steps?:Step[];result?:Result;error?:string;stopped?:boolean;expanded?:boolean}
+export type Message={id:string;role:'user'|'assistant';text?:string;filename?:string;usedResume?:boolean;steps?:Step[];result?:Result;error?:string;stopped?:boolean;expanded?:boolean}
