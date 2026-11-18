@@ -235,6 +235,33 @@ async def fetch_html_jobs(client, source, stats):
     return []
 
 
+def parse_hiretik_company(source, html):
+    """Read public listing metadata with a matching employer application link."""
+    soup = BeautifulSoup(html, 'html.parser')
+    jobs = []
+    for card in soup.select('article[data-job-id]')[:80]:
+        identity = card['data-job-id']
+        if not re.fullmatch(r'[a-f0-9-]{36}', identity):
+            continue
+        listing = card.select_one(f'a[href="/jobs/{identity}"]')
+        apply = card.select_one(f'a[data-track="apply"][data-track-job-id="{identity}"][href]')
+        if not listing or not apply:
+            continue
+        target = urlparse(apply['href'])
+        if (target.scheme != 'https' or target.netloc != source['application_host']
+                or not re.fullmatch(r'/o/[a-z0-9-]+/c/new/?', target.path)):
+            continue
+        job = _job(source, listing.get_text(' ', strip=True),
+                   urljoin(source['hiretik_fallback_url'], listing['href']), source['name'],
+                   application_url=apply['href'], listing_provider='hiretik',
+                   status_evidence='Listed by Hiretik with an employer application link. Current application availability is unverified.')
+        if job:
+            jobs.append(job)
+    if not jobs:
+        raise ValueError('Hiretik returned no recognizable employer listings')
+    return jobs
+
+
 def parse_recrupen(source, body):
     """Public Cafe Bazaar listing schema, inspected on 17 November 2026."""
     if not isinstance(body,list): raise ValueError('Missing Recrupen job list')

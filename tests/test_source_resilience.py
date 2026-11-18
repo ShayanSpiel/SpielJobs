@@ -142,3 +142,32 @@ class SourceResilienceTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(report['provider'], 'jobvision')
                 self.assertEqual(report['primary_failure_kind'], failure)
                 self.assertEqual(report['primary_http_status'], 403 if status == 403 else None)
+
+    async def test_public_listing_fallback_requires_matching_employer_application(self):
+        self.source.update(kind='html', hiretik_fallback_url='https://hiretik.com/companies/arvan',
+                           application_host='jobs.arvancloud.ir')
+        identity = '00c1ae1f-17fb-476c-a33c-e33c6584792c'
+
+        def page(host):
+            return f'''<article data-job-id="{identity}">
+                <a href="/jobs/{identity}">Core System Engineer</a>
+                <a href="https://{host}/o/core-system-engineer/c/new" data-track="apply"
+                   data-track-job-id="{identity}">Apply</a>
+            </article>'''
+
+        for host in ('unrelated.example', 'jobs.arvancloud.ir'):
+            def handler(request):
+                if request.url.host == 'hiretik.com':
+                    return httpx.Response(200, text=page(host))
+                return httpx.Response(403)
+
+            jobs, reports = await self.collect(handler)
+            report = next(r for r in reports if r['id'] == self.source['id'])
+            if host == 'unrelated.example':
+                self.assertFalse(jobs)
+                self.assertEqual(report['state'], 'unavailable')
+                continue
+            self.assertEqual(report['provider'], 'hiretik')
+            self.assertEqual(report['primary_failure_kind'], 'blocked')
+            self.assertEqual(jobs[0]['url'], f'https://hiretik.com/jobs/{identity}')
+            self.assertEqual(jobs[0]['application_url'], f'https://{host}/o/core-system-engineer/c/new')

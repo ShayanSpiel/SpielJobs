@@ -16,6 +16,7 @@ export const site = {
 } as const
 
 export const socialLinks = [
-  {label:'LinkedIn',icon:'bxl-linkedin',href:site.links.linkedin},
-  {label:'GitHub',icon:'bxl-github',href:site.links.github},
+  {label:'LinkedIn',icon:'linkedin',href:site.links.linkedin},
+  {label:'X',icon:'x',href:site.links.x},
+  {label:'GitHub',icon:'github',href:site.links.github},
 ] as const

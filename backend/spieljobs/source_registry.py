@@ -21,7 +21,7 @@ CAREERS=[
  {'id':'karnameh','name':'Karnameh','label':'کارنامه','site_url':'https://karnameh.com','url':'https://careers.karnameh.com/','kind':'html'},
  {'id':'blubank','name':'Blubank','label':'بلوبانک','site_url':'https://blubank.com','url':'https://careers.blubank.ir/','kind':'html'},
  {'id':'shab','name':'Shab','label':'شب','site_url':'https://shab.ir','url':'https://www.shab.ir/careers','kind':'html'},
- {'id':'arvancloud','name':'Arvancloud','label':'آروان‌کلاد','site_url':'https://arvancloud.ir','url':'https://www.arvancloud.ir/fa/jobs','kind':'html','access_challenge_marker':'__arcsjsc'},
+ {'id':'arvancloud','name':'Arvancloud','label':'آروان‌کلاد','site_url':'https://arvancloud.ir','url':'https://www.arvancloud.ir/fa/jobs','kind':'html','access_challenge_marker':'__arcsjsc','hiretik_fallback_url':'https://hiretik.com/companies/arvan','application_host':'jobs.arvancloud.ir'},
 ]
 
 

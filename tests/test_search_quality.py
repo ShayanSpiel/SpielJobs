@@ -98,7 +98,7 @@ class SearchRuntimeTests(unittest.IsolatedAsyncioTestCase):
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://test') as client:
                 response=await client.post('/search',json={'query':'کارشناس پشتیبانی'})
         self.assertEqual(response.json()['jobs'],[])
-        self.assertIn('شواهد کافی',response.json()['warnings'][0])
+        self.assertIn('با همهٔ معیارهای جست‌وجو هم‌خوان نبودند',response.json()['warnings'][0])
 
     async def test_streamed_search_filters_false_positive(self):
         jobs=[{'title':'کارشناس پشتیبانی مشتریان','source':'sample'},

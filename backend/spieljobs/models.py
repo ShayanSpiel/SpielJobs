@@ -6,6 +6,7 @@ import logging
 import httpx
 from pathlib import Path
 from dotenv import load_dotenv
+from .core import STOP, GENERIC_QUALIFIERS, normalize
 from .tracing import observation, safe_text
 logger=logging.getLogger(__name__)
 
@@ -41,9 +42,18 @@ async def extract_profile(query: str, resume: str, diagnostics: dict | None = No
                         raw_usage=body.get('usageMetadata') or {}
                         usage={k:v for k,v in {'input':raw_usage.get('promptTokenCount'),'output':raw_usage.get('candidatesTokenCount')}.items() if isinstance(v,int)}
                     content=re.sub(r'^```(?:json)?\s*|\s*```$', '', content.strip())
-                    values=json.loads(content).get('terms',[])
+                    result=json.loads(content)
+                    values=result.get('terms') if isinstance(result,dict) else None
                     if not isinstance(values,list): raise ValueError('Invalid terms')
-                    terms = [v.strip()[:100] for v in values if isinstance(v,str) and v.strip()][:12]
+                    terms = []
+                    for value in values:
+                        if not isinstance(value,str):
+                            continue
+                        term = value.strip()[:100]
+                        normalized = normalize(term)
+                        if len(normalized)>1 and normalized not in STOP and normalized not in GENERIC_QUALIFIERS:
+                            terms.append(term)
+                    terms = list(dict.fromkeys(terms))[:12]
                     generation.update(output={'terms':[safe_text(t,100) for t in terms]}, usage_details=usage or None)
                     if terms:
                         diagnostics['reason'] = 'ok'

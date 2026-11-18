@@ -4,7 +4,7 @@ from time import perf_counter
 from uuid import uuid4
 from .revision import RUNTIME_REVISION
 from langgraph.graph import StateGraph, START, END
-from .core import extract_resume_terms, fallback_resume_role, needs_interpretation, parse_query, rank_and_filter, STOP, normalize, GENERIC_QUALIFIERS, contains_term, CITIES
+from .core import extract_resume_terms, fallback_resume_role, needs_interpretation, parse_query, rank_and_filter, normalize, contains_term, CITIES
 from .sources import collect, enrich_jobs
 from .models import extract_profile
 from .tracing import observation, traced_node, current_trace_id, trace_input, flush_trace_client, trace_scope
@@ -26,7 +26,7 @@ async def prepare(state):
     warnings=[]; provider=None
     if profile['corrections']:
         changes='، '.join(f"{item['original']} ← {item['corrected']}" for item in profile['corrections'])
-        warnings.append(f'جست‌وجو با اصلاح املایی انجام شد: {changes}')
+        warnings.append(f'املای عبارت جست‌وجو اصلاح شد ({changes}).')
     query_terms = profile['terms']
     cv_terms = []
     resume = state.get('resume', '')
@@ -36,19 +36,14 @@ async def prepare(state):
         cv_terms = extract_resume_terms(resume) if resume else []
         diagnostics = {}
         model_terms,provider = await extract_profile(state['query'],resume, diagnostics=diagnostics)
-        model_terms = [term for term in model_terms if normalize(term) not in STOP and normalize(term) not in GENERIC_QUALIFIERS and len(normalize(term)) > 1]
         if model_terms:
             cv_terms = list(dict.fromkeys(model_terms + cv_terms))[:12]
         elif resume and cv_terms:
-            warnings.append('تحلیل هوشمند رزومه در دسترس نبود؛ عبارت‌های شناخته‌شده به‌صورت محلی استخراج شدند.')
+            warnings.append('تحلیل کامل رزومه در دسترس نبود. نتایج بر اساس عنوان‌ها و کلیدواژه‌های شناسایی‌شده در رزومه است.')
         elif resume:
-            reason = diagnostics.get('reason')
-            if reason == 'not_configured':
-                warnings.append('کلید مدل برای تحلیل رزومه تنظیم نشده است و واژه‌نامهٔ محلی هم موردی پیدا نکرد. این به معنی نداشتن مهارت در رزومه نیست.')
-            else:
-                warnings.append('تحلیل هوشمند رزومه پاسخ قابل استفاده نداد و واژه‌نامهٔ محدود محلی هم موردی پیدا نکرد. این به معنی نداشتن مهارت در رزومه نیست.')
+            warnings.append('عنوان شغلی قابل جست‌وجویی از رزومه استخراج نشد. عنوان شغل دلخواهتان را در کادر جست‌وجو بنویسید.')
         else:
-            warnings.append('تحلیل هوشمند درخواست در دسترس نبود؛ جست‌وجو با تطبیق محدود واژه‌ها انجام شد.')
+            warnings.append('تحلیل کامل درخواست در دسترس نبود. جست‌وجو بر اساس کلیدواژه‌های شما انجام شد.')
     profile['terms'] = list(dict.fromkeys((cv_terms + query_terms) if interpret else query_terms))[:30]
     # Resume/model expansion must preserve explicit query concept constraints.
     # A complex prompt's inferred search phrases need to reach the source.
@@ -66,7 +61,7 @@ async def prepare(state):
     constraint_labels = {'remote_only': 'فقط دورکاری', 'exclude_tehran': 'حذف تهران'}
     for constraint in profile.get('unsupported_constraints', []):
         label = constraint_labels[constraint]
-        warnings.append(f'فیلتر «{label}» فعلاً قابل بررسی نیست. برای جست‌وجو، این شرط را بردارید.')
+        warnings.append(f'فیلتر «{label}» فعلاً پشتیبانی نمی‌شود. عبارت را بدون این فیلتر جست‌وجو کنید.')
     return {'profile':profile,'model_used':provider,'warnings':warnings}
 
 @traced_node('spieljobs.search_sources', 'retriever')
@@ -92,11 +87,11 @@ async def rank(state):
     jobs = rank_and_filter(state['jobs'], profile)
     warnings=list(state.get('warnings', []))
     if any(source.get('state') == 'stale' for source in state.get('sources', [])):
-        warnings.append('بعضی منابع اکنون پاسخ ندادند؛ نتایج آن‌ها از آخرین بررسی موفق است و ممکن است تغییر کرده باشد. زمان بررسی در وضعیت منابع مشخص است.')
+        warnings.append('برای منابعی که پاسخ ندادند، نتایج آخرین بررسی موفق نمایش داده شد. وضعیت آگهی را در صفحهٔ منبع بررسی کنید.')
     if state.get('jobs') and not jobs:
-        warnings.append('آگهی‌هایی پیدا شد، اما شواهد کافی برای معیارهای درخواستت نداشتند. عنوان کوتاه‌تر یا یک معیار کمتر را امتحان کن.')
+        warnings.append('آگهی‌ها با همهٔ معیارهای جست‌وجو هم‌خوان نبودند. یک فیلتر را بردارید و دوباره جست‌وجو کنید.')
     if len(jobs)>50:
-        warnings.append('۵۰ نتیجهٔ اول نمایش داده می‌شود. برای محدود کردن نتایج، مهارت یا بازهٔ زمانی را اضافه کن.')
+        warnings.append('۵۰ نتیجهٔ اول نمایش داده شده است. برای جست‌وجوی دقیق‌تر، مهارت یا بازهٔ زمانی اضافه کنید.')
     jobs=jobs[:50]
     sources=[dict(source,matched_count=sum(1 for job in jobs if any((entry.get('id') or '').lower()==(source.get('id') or '').lower() for entry in job.get('sources',[])) or (job.get('source') or '').lower()==(source.get('id') or '').lower())) for source in state.get('sources',[])]
     return {'jobs':jobs, 'sources':sources, 'warnings':warnings}

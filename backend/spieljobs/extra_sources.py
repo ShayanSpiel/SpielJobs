@@ -54,7 +54,7 @@ def _snapshot(source, *, stale=False, failure=None):
 
 # Re-export parsers for compatibility; transport-independent platform code lives
 # in adapters.py and employer-specific settings live in source_registry.py.
-from .adapters import _text, _title, parse_jobvision, parse_hrcando, fetch_hrcando, parse_career, fetch_html_jobs, parse_recrupen
+from .adapters import _text, _title, parse_jobvision, parse_hrcando, fetch_hrcando, parse_career, fetch_html_jobs, parse_recrupen, parse_hiretik_company
 
 async def collect_extra(terms, progress=None):
     if not terms: return [],[]
@@ -121,7 +121,8 @@ async def collect_extra(terms, progress=None):
 
                             async def fetch_with_fallback():
                                 company_id = source.get('jobvision_fallback_id')
-                                if company_id is None:
+                                hiretik_url = source.get('hiretik_fallback_url')
+                                if company_id is None and not hiretik_url:
                                     return await fetch()
                                 try:
                                     jobs = await fetch()
@@ -132,8 +133,17 @@ async def collect_extra(terms, progress=None):
                                         return jobs
                                     failure, status = 'schema_changed', None
                                 stats.update(primary_failure_kind=failure, primary_http_status=status)
-                                jobs = await company_list(company_id)
-                                stats['fallback_provider'] = 'jobvision'
+                                if company_id is not None:
+                                    jobs = await company_list(company_id)
+                                    stats['fallback_provider'] = 'jobvision'
+                                else:
+                                    stats['requests'] += 1
+                                    response = await client.get(hiretik_url)
+                                    response.raise_for_status()
+                                    if str(response.url).rstrip('/') != hiretik_url.rstrip('/'):
+                                        raise ValueError('Unexpected Hiretik company page')
+                                    jobs = parse_hiretik_company(source, response.text)
+                                    stats['fallback_provider'] = 'hiretik'
                                 return jobs
 
                             for attempt in range(2):
@@ -158,7 +168,12 @@ async def collect_extra(terms, progress=None):
                             fallback = {'provider': stats['fallback_provider'],
                                         'primary_failure_kind': stats['primary_failure_kind'],
                                         'primary_http_status': stats['primary_http_status']}
-                            report.update(fallback, message='The primary careers page could not be used. This employer’s listings were checked on its verified Jobvision company page.')
+                            message = (
+                                'Checked the employer’s verified Jobvision company page.'
+                                if fallback['provider'] == 'jobvision' else
+                                'Listings are from the employer’s Hiretik company page. Current application availability is unverified.'
+                            )
+                            report.update(fallback, message=message)
                         span.update(level='WARNING' if state=='unverified' else 'DEFAULT',
                             status_message='Unrecognized listing structure' if state=='unverified' else None,
                             output={'state':state,'count':len(jobs),'failure_kind':report.get('failure_kind'),**fallback, 'jobs':summarize_jobs(jobs,30)})
