@@ -37,6 +37,34 @@ export default function McpPage(){
    'OpenCode':`opencode mcp add spieljobs --global --url ${endpoint}`,
  }:localCommands
  async function copy(){try{await navigator.clipboard.writeText(commands[client]);setCopied(true);track('mcp_connection_command_copied',{client,transport:endpoint?'http':'stdio'});setTimeout(()=>setCopied(false),1800)}catch{setCopied(false)}}
+ if (endpoint && process.env.NEXT_PUBLIC_SPIELJOBS_SUPABASE_SEARCH === 'true') {
+  return (
+   <main className="mcp-page" dir="rtl">
+    <header className="mcp-nav">
+     <Link className="mcp-brand" href="/"><span className="mcp-mark"><SpielMark animated/></span><b dir="ltr">SpielJobs<span>.</span></b></Link>
+     <div className="mcp-nav-actions"><Link href="/">جست‌وجوی وب</Link></div>
+    </header>
+    <section className="mcp-hero">
+     <div className="mcp-badge"><span/> SPIELJOBS MCP · نسخه آزمایشی</div>
+     <h1>جست‌وجوی شغل<br/><span>از داخل دستیار شما</span></h1>
+     <p>یک عنوان شغلی مثل «حسابدار» وارد کنید. SpielJobs صفحهٔ اول جاب‌ویژن و جابینجا را بررسی می‌کند و لینک آگهی‌ها و وضعیت هر منبع را برمی‌گرداند.</p>
+    </section>
+    <section className="mcp-section mcp-source-overview" aria-label="منابع جست‌وجو">
+     <div className="mcp-source-grid">
+      <article><BrandLogo domain="jobvision.ir" name="جاب‌ویژن" local={brands.jobvision.logo}/><div><h3>جاب‌ویژن</h3><p>جست‌وجوی کلیدواژه</p></div></article>
+      <article><BrandLogo domain="jobinja.ir" name="جابینجا" local={brands.jobinja.logo}/><div><h3>جابینجا</h3><p>نتایج وابسته به دسترسی منبع</p></div></article>
+     </div>
+    </section>
+    <section className="mcp-section mcp-connect">
+     <div className="mcp-connect-copy"><h2>اتصال به دستیار</h2><p>کلاینت خود را انتخاب کنید و دستور اتصال را اجرا کنید. ابزار <code dir="ltr">search_live_jobs</code> عبارت <code dir="ltr">query</code> را می‌پذیرد. این نسخه جست‌وجوی رزومه ندارد.</p></div>
+     <div className="mcp-terminal">
+      <div className="client-tabs">{clients.map(c=><button className={c===client?'selected':''} key={c} onClick={()=>{setClient(c);setCopied(false)}}>{c}</button>)}</div>
+      <div className="copy-code"><pre dir="ltr"><code>{commands[client]}</code></pre><button onClick={copy} type="button">{copied?'کپی شد':'کپی دستور'}</button></div>
+     </div>
+    </section>
+   </main>
+  )
+ }
  return <main className="mcp-page" dir="rtl"><header className="mcp-nav"><Link className="mcp-brand" href="/"><span className="mcp-mark"><SpielMark animated/></span><b dir="ltr">SpielJobs<span>.</span></b></Link><div className="mcp-nav-actions"><a href="#problem">مسئله</a><a href="#functions">ابزارهای MCP</a><a href="#connect">راهنمای اتصال</a><Link className="mcp-nav-cta" href="/">بازگشت به جست‌وجو <i className="bx bx-left-arrow-alt"/></Link></div></header>
  <section className="mcp-hero"><div className="mcp-badge"><span/> SPIELJOBS MCP · نسخه آزمایشی</div><h1>جست‌وجوی شغل،<br/><span>نتایج چند منبع، یک‌جا.</span></h1><p>به‌جای رفت‌وآمد بین سایت‌های کاریابی، به دستیار خود بگویید دنبال چه نقشی هستید. SpielJobs آگهی‌های منبع متصل را جست‌وجو می‌کند، با درخواست یا متن رزومهٔ شما تطبیق می‌دهد و نتایج را با تاریخ و لینک اصلی، یک‌جا به گفت‌وگو می‌آورد.</p><div className="mcp-actions"><a className="mcp-primary" href="#connect">اتصال به دستیار <i className="bx bx-left-arrow-alt"/></a><a className="mcp-secondary" href="#problem">چرا SpielJobs؟ <i className="bx bx-down-arrow-alt"/></a></div><div className="mcp-client-strip"><span>قابل اتصال به</span><div>{clients.map(name=><b className="client-brand" key={name}><ClientMark name={name}/>{name}</b>)}</div></div><div className="mcp-hero-art"><div className="mcp-halo halo-one"/><div className="mcp-halo halo-two"/><div className="mcp-avatar"><SpielMark animated/></div><span className="mcp-orbit-chip orbit-a"><i className="bx bx-search"/> جست‌وجوی زنده</span><span className="mcp-orbit-chip orbit-b"><i className="bx bx-link-alt"/> لینک منبع</span><span className="mcp-orbit-chip orbit-c"><i className="bx bx-check-shield"/> وضعیت پوشش</span></div></section>
  <section className="mcp-source-overview" aria-label="منابع جست‌وجوی شغل">
