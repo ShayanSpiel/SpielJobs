@@ -30,7 +30,7 @@ function CompanyLogo({job}:{job:Job}){
 }
 function Description({text}:{text:string}){
  const [expanded,setExpanded]=useState(false)
- return <div className="job-description"><strong>دربارهٔ این فرصت</strong><p className={expanded?'description-full':'description-preview'} dir="auto">{text.slice(0,6000)}</p>{Boolean(text.trim())&&<button className="description-toggle" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?'نمایش کمتر':'ادامهٔ توضیحات'}<Icon name={expanded?'chevron-up':'chevron-down'}/></button>}</div>
+ return <div className="job-description"><strong>دربارهٔ این فرصت</strong><p className={expanded?'description-full':'description-preview'} dir="auto">{text.slice(0,6000)}</p>{text.length>100&&<button className="description-toggle" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?'نمایش کمتر':'ادامهٔ توضیحات'}<Icon name={expanded?'chevron-up':'chevron-down'}/></button>}</div>
 }
 function jobinjaSearchLink(source:Source){
  if(source.id!=='jobinja'||source.state!=='unavailable')return null
