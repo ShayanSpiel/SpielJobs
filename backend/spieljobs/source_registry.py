@@ -7,7 +7,7 @@ CAREERS=[
  {'id':'digikala','name':'Digikala','label':'دیجی‌کالا','site_url':'https://digikala.com','url':'https://career.hrcando.ir/co/Digikala','kind':'hrcando','verification':'official-careers-api-redirect-2026-11-17'},
  {'id':'tapsi','name':'Tapsi','label':'تپسی','site_url':'https://tapsi.ir','url':'https://careers.tapsi.ir/jobs','kind':'hrcando'},
  {'id':'snappfood','name':'Snappfood','label':'اسنپ‌فود','site_url':'https://snappfood.ir','url':'https://careers.snappfood.ir/','kind':'hrcando','job_path':'/job-details/','filters':True,'strip_opening_count':True},
- {'id':'azki','name':'Azki','label':'ازکی','site_url':'https://azki.com','url':'https://jobs.azki.com/','kind':'html'},
+ {'id':'azki','name':'Azki','label':'ازکی','site_url':'https://azki.com','url':'https://jobs.azki.com/','kind':'html','jobvision_fallback_id':581},
  {'id':'yektanet','name':'Yektanet','label':'یکتانت','site_url':'https://www.yektanet.ir','url':'https://www.yektanet.ir/careers/','kind':'jobvision_company','company_id':1236,'provider':'jobvision','verification':'official-company-careers-link-2026-11-17'},
  {'id':'jabama','name':'Jabama','label':'جاباما','site_url':'https://jabama.com','url':'https://careers.jabama.com/','kind':'html'},
  {'id':'alibaba','name':'Alibaba Travels','label':'علی‌بابا','site_url':'https://alibaba.ir','url':'https://jobs.alibaba.ir/','kind':'html'},
