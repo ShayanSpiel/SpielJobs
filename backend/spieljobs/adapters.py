@@ -196,6 +196,10 @@ def parse_career(source,body):
 async def fetch_html_jobs(client, source, stats):
     response = await fetch_career_page(client, source, stats)
     effective = {**source, 'url': str(response.url)}
+    challenge = source.get('access_challenge_marker')
+    if challenge and challenge in response.text:
+        from .contracts import SourceAccessRestricted
+        raise SourceAccessRestricted('Employer requires browser verification')
     if source.get('unavailable_marker') and source['unavailable_marker'] in BeautifulSoup(response.text,'html.parser').get_text(' ',strip=True):
         from .contracts import SourceMaintenance
         raise SourceMaintenance('Employer reports careers maintenance')
