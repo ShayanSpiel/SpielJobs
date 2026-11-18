@@ -63,8 +63,10 @@ async def prepare(state):
         profile['fallback_resume_role']=fallback_resume_role(resume)
         if profile['fallback_resume_role']:
             profile['terms']=list(dict.fromkeys(profile['fallback_resume_role']+profile['terms']))[:30]
-    if profile.get('unsupported_constraints'):
-        warnings.append('این نسخه هنوز نمی‌تواند محدودیت درخواستی دورکاری یا استثنا کردن تهران را با اطمینان بررسی کند؛ برای جلوگیری از نتیجهٔ گمراه‌کننده جست‌وجو انجام نشد.')
+    constraint_labels = {'remote_only': 'فقط دورکاری', 'exclude_tehran': 'حذف تهران'}
+    for constraint in profile.get('unsupported_constraints', []):
+        label = constraint_labels[constraint]
+        warnings.append(f'فیلتر «{label}» فعلاً قابل بررسی نیست. برای جست‌وجو، این شرط را بردارید.')
     return {'profile':profile,'model_used':provider,'warnings':warnings}
 
 @traced_node('spieljobs.search_sources', 'retriever')
