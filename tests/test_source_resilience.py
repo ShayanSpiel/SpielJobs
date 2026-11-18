@@ -87,3 +87,34 @@ class SourceResilienceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report['state'], 'success')
         self.assertEqual(report['retry_count'], 1)
         self.assertFalse(jobs)
+
+    async def test_company_board_fallback_preserves_jobvision_url_and_provenance(self):
+        self.source.update(kind='html', jobvision_fallback_id=581)
+
+        def handler(request):
+            if request.url.host == 'example.org':
+                raise httpx.ConnectError('careers host unavailable', request=request)
+            if b'"companyId":581' in request.content:
+                return httpx.Response(200, json={'data': {'jobPosts': [
+                    {'id': 42, 'title': 'Accountant', 'company': {'id': 581, 'nameFa': 'ازکی'}},
+                ]}})
+            return httpx.Response(200, json={'data': {'jobPosts': []}})
+
+        jobs, reports = await self.collect(handler)
+        report = next(r for r in reports if r['id'] == self.source['id'])
+        self.assertEqual(report['provider'], 'jobvision')
+        self.assertEqual(report['state'], 'partial')
+        self.assertEqual(jobs[0]['url'], 'https://jobvision.ir/jobs/42')
+
+    async def test_browser_verification_with_status_200_is_reported_as_blocked(self):
+        self.source.update(kind='html', access_challenge_marker='__arcsjsc')
+
+        def handler(request):
+            if request.url.host == 'example.org':
+                return httpx.Response(200, text='<script>document.cookie="__arcsjsc=fixture"</script>')
+            return httpx.Response(403)
+
+        jobs, reports = await self.collect(handler)
+        report = next(r for r in reports if r['id'] == self.source['id'])
+        self.assertFalse(jobs)
+        self.assertEqual((report['state'], report['failure_kind']), ('unavailable', 'blocked'))
