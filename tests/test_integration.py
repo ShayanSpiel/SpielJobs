@@ -235,7 +235,7 @@ class ProviderDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
             return [],None
         with patch('spieljobs.agent.extract_profile',side_effect=unavailable):
             result=await prepare({'query':'کار','resume':'experience in an unfamiliar specialty'})
-        self.assertIn('عنوان شغل دلخواهتان را در کادر جست‌وجو بنویسید',result['warnings'][0])
+        self.assertIn('اسم شغلی که دنبالش هستی رو توی کادر جست‌وجو بنویس',result['warnings'][0])
         self.assertNotIn('مهارت قابل تشخیصی',result['warnings'][0])
 
 class ResumeRoleFallbackTests(unittest.IsolatedAsyncioTestCase):

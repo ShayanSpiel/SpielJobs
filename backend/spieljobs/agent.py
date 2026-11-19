@@ -19,6 +19,7 @@ class State(TypedDict, total=False):
     sources: list[dict[str, Any]]
     model_used: str | None
     warnings: list[str]
+    filtered_out: bool
 
 @traced_node('spieljobs.prepare', 'chain')
 async def prepare(state):
@@ -39,11 +40,11 @@ async def prepare(state):
         if model_terms:
             cv_terms = list(dict.fromkeys(model_terms + cv_terms))[:12]
         elif resume and cv_terms:
-            warnings.append('تحلیل کامل رزومه در دسترس نبود. نتایج بر اساس عنوان‌ها و کلیدواژه‌های شناسایی‌شده در رزومه است.')
+            warnings.append('این بار با عنوان‌ها و کلیدواژه‌های رزومه‌ات جست‌وجو کردم.')
         elif resume:
-            warnings.append('عنوان شغلی قابل جست‌وجویی از رزومه استخراج نشد. عنوان شغل دلخواهتان را در کادر جست‌وجو بنویسید.')
+            warnings.append('از رزومه‌ات عنوان شغلی مشخصی پیدا نکردم. اسم شغلی که دنبالش هستی رو توی کادر جست‌وجو بنویس.')
         else:
-            warnings.append('تحلیل کامل درخواست در دسترس نبود. جست‌وجو بر اساس کلیدواژه‌های شما انجام شد.')
+            warnings.append('این بار با کلیدواژه‌های درخواستت جست‌وجو کردم.')
     profile['terms'] = list(dict.fromkeys((cv_terms + query_terms) if interpret else query_terms))[:30]
     # Resume/model expansion must preserve explicit query concept constraints.
     # A complex prompt's inferred search phrases need to reach the source.
@@ -61,7 +62,7 @@ async def prepare(state):
     constraint_labels = {'remote_only': 'فقط دورکاری', 'exclude_tehran': 'حذف تهران'}
     for constraint in profile.get('unsupported_constraints', []):
         label = constraint_labels[constraint]
-        warnings.append(f'فیلتر «{label}» فعلاً پشتیبانی نمی‌شود. عبارت را بدون این فیلتر جست‌وجو کنید.')
+        warnings.append(f'فعلاً نمی‌تونم «{label}» رو اعمال کنم. بدون این شرط دوباره امتحان کن.')
     return {'profile':profile,'model_used':provider,'warnings':warnings}
 
 @traced_node('spieljobs.search_sources', 'retriever')
@@ -86,15 +87,14 @@ async def rank(state):
     await asyncio.gather(enrich_jobs(candidates),enrich_extra(candidates))
     jobs = rank_and_filter(state['jobs'], profile)
     warnings=list(state.get('warnings', []))
-    if any(source.get('state') == 'stale' for source in state.get('sources', [])):
-        warnings.append('برای منابعی که پاسخ ندادند، نتایج آخرین بررسی موفق نمایش داده شد. وضعیت آگهی را در صفحهٔ منبع بررسی کنید.')
-    if state.get('jobs') and not jobs:
-        warnings.append('آگهی‌ها با همهٔ معیارهای جست‌وجو هم‌خوان نبودند. یک فیلتر را بردارید و دوباره جست‌وجو کنید.')
+    if jobs and any(source.get('state') == 'stale' for source in state.get('sources', [])):
+        warnings.append('بعضی آگهی‌ها از بررسی قبلی‌ان. قبل از درخواست، وضعیتشون رو توی سایت منبع چک کن.')
+    filtered_out = bool(state.get('jobs')) and not jobs
     if len(jobs)>50:
-        warnings.append('۵۰ نتیجهٔ اول نمایش داده شده است. برای جست‌وجوی دقیق‌تر، مهارت یا بازهٔ زمانی اضافه کنید.')
+        warnings.append('۵۰ آگهی اول رو آوردم. برای نتیجه‌های دقیق‌تر، اسم یه مهارت یا بازهٔ زمانی رو به جست‌وجوت اضافه کن.')
     jobs=jobs[:50]
     sources=[dict(source,matched_count=sum(1 for job in jobs if any((entry.get('id') or '').lower()==(source.get('id') or '').lower() for entry in job.get('sources',[])) or (job.get('source') or '').lower()==(source.get('id') or '').lower())) for source in state.get('sources',[])]
-    return {'jobs':jobs, 'sources':sources, 'warnings':warnings}
+    return {'jobs':jobs, 'sources':sources, 'warnings':warnings, 'filtered_out':filtered_out}
 
 builder = StateGraph(State)
 builder.add_node('prepare',prepare)

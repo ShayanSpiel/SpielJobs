@@ -93,6 +93,8 @@ a:focus-visible,button:focus-visible,textarea:focus-visible{outline:2px solid va
 .step-indicator .bx{font-size:13px}
 .activity-step small{display:block;color:var(--faint);margin-top:2px;text-align:right}
 .assistant-copy{font-size:12px;line-height:2.1;margin:22px 0 18px}
+.empty-reply strong{display:block;font-size:14px}
+.empty-reply p{margin:4px 0 0;color:var(--muted)}
 .results{border:1px solid var(--line);background:var(--surface);border-radius:13px;overflow:hidden;box-shadow:var(--shadow)}
 .result-heading{display:flex;justify-content:space-between;align-items:flex-end;padding:19px 18px 16px}
 .result-heading h3{font-family:Doran,IRANSansX,sans-serif;font-size:18px;margin:6px 0 0}
