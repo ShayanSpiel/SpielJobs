@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { Analytics } from '@vercel/analytics/next'
 import { site } from '@/lib/site'
 import './globals.css'
 
@@ -31,5 +32,5 @@ export default function RootLayout({children}:{children:React.ReactNode}) {
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structuredData).replace(/</g,'\\u003c')}}/>
     <link rel="preload" href="/fonts/IRANSansXVF.woff2" as="font" type="font/woff2" crossOrigin="anonymous"/>
     <link rel="stylesheet" href="/boxicons.css"/>
-  </head><body>{children}</body></html>
+  </head><body>{children}<Analytics /></body></html>
 }
